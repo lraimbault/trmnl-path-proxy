@@ -1,0 +1,9 @@
+services:
+  - type: web
+      name: trmnl-path-proxy
+          runtime: node
+              plan: free
+                  region: ohio
+                      buildCommand: npm install
+                          startCommand: node server.js
+                          
