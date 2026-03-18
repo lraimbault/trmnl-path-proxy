@@ -107,9 +107,19 @@ app.get('/trmnl/path', async (req, res) => {
             return d;
         });
 
+        // TRMNL canvas is space-limited; keep the UI consistent with the mocks.
+        // Sort destinations by the soonest upcoming train for stable ordering.
+        destinations.sort((a, b) => {
+            const aNext = a.trains?.[0]?.secondsToArrival ?? Infinity;
+            const bNext = b.trains?.[0]?.secondsToArrival ?? Infinity;
+            return aNext - bNext;
+        });
+
+        const limitedDestinations = destinations.slice(0, 2);
+
         res.json({
             station_name: humanNames[stationData.consideredStation] || stationData.consideredStation,
-            destinations: destinations,
+            destinations: limitedDestinations,
             alerts: activeAlerts,
             last_updated: DateTime.now().setZone('America/New_York').toFormat('hh:mm a')
         });
