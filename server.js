@@ -130,6 +130,39 @@ app.get('/trmnl/path', async (req, res) => {
     }
 });
 
+// Alerts-only endpoint for the half-vertical TRMNL display
+app.get('/trmnl/alerts', async (req, res) => {
+    try {
+        const alertsResponse = await axios.get(ALERTS_API_URL, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+        }).catch(e => ({ data: { data: [] } }));
+
+        const rawAlerts = alertsResponse.data?.data || [];
+
+        const alerts = rawAlerts
+            .filter(a => {
+                const status = (a.status || '').toLowerCase();
+                return !status || status === 'active' || status === 'open';
+            })
+            .map(a => {
+                const title = (a.title || a.headline || '').trim();
+                const body = (a.message || a.description || a.content || title).trim();
+                return { title, body };
+            })
+            .filter(a => a.body);
+
+        res.json({
+            alerts,
+            alert_count: alerts.length,
+            last_updated: DateTime.now().setZone('America/New_York').toFormat('hh:mm a')
+        });
+
+    } catch (error) {
+        console.error('Error fetching PATH alerts:', error.stack);
+        res.status(500).json({ error: 'Failed to fetch PATH alerts' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`PATH TRMNL proxy server running on port ${PORT}`);
 });
